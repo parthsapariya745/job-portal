@@ -1,6 +1,33 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { isAuthenticated, getUserFromToken, setToken } from "../lib/auth"
+
 export default function HomePage({ setCurrentPage }) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    // Handle OAuth callback token from URL
+    const urlParams = new URLSearchParams(window.location.search)
+    const token = urlParams.get("token")
+    
+    if (token) {
+      setToken(token)
+      // Clear URL params
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+
+    // Check auth state
+    const checkAuth = () => {
+      const authenticated = isAuthenticated()
+      setIsLoggedIn(authenticated)
+      if (authenticated) {
+        setUser(getUserFromToken())
+      }
+    }
+    checkAuth()
+  }, [])
   const stats = [
     { label: "Active Jobs", value: "12,450" },
     { label: "Registered Candidates", value: "85,320" },
@@ -43,20 +70,50 @@ export default function HomePage({ setCurrentPage }) {
             <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto text-balance">
               India's leading government-compliant job portal connecting job seekers with employers across all sectors.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => setCurrentPage("job-search")}
-                className="px-8 py-3 bg-accent text-primary font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Search Jobs
-              </button>
-              <button
-                onClick={() => setCurrentPage("employer-registration")}
-                className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
-              >
-                Post a Job
-              </button>
-            </div>
+            {isLoggedIn && user ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="bg-white bg-opacity-10 rounded-lg p-6 max-w-md w-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-primary font-bold text-2xl">
+                      {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">{user.name || "Welcome!"}</h2>
+                      <p className="text-blue-200 text-sm">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={() => setCurrentPage("user-dashboard")}
+                      className="flex-1 px-6 py-2 bg-accent text-primary font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Go to Dashboard
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage("job-search")}
+                      className="flex-1 px-6 py-2 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
+                    >
+                      Search Jobs
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => setCurrentPage("job-search")}
+                  className="px-8 py-3 bg-accent text-primary font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Search Jobs
+                </button>
+                <button
+                  onClick={() => setCurrentPage("employer-registration")}
+                  className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
+                >
+                  Post a Job
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -154,20 +211,37 @@ export default function HomePage({ setCurrentPage }) {
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of job seekers and employers who trust our platform.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => setCurrentPage("candidate-registration")}
-              className="px-8 py-3 bg-accent text-primary font-semibold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Register as Job Seeker
-            </button>
-            <button
-              onClick={() => setCurrentPage("employer-registration")}
-              className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
-            >
-              Register as Employer
-            </button>
-          </div>
+          {isLoggedIn && user ? (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => setCurrentPage("user-dashboard")}
+                className="px-8 py-3 bg-accent text-primary font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                onClick={() => setCurrentPage("job-search")}
+                className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
+              >
+                Search Jobs
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => setCurrentPage("candidate-registration")}
+                className="px-8 py-3 bg-accent text-primary font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Register as Job Seeker
+              </button>
+              <button
+                onClick={() => setCurrentPage("employer-registration")}
+                className="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary transition-colors"
+              >
+                Register as Employer
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>
